@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vertex Studio — Modern Web Experiences</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <div class="container">
+        <a class="brand" href="#top" aria-label="Vertex Studio home">
+          <span class="brand__mark" aria-hidden="true">V</span>
+          <span class="brand__text">Vertex Studio</span>
+        </a>
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+        >
+          <span class="nav-toggle__bar"></span>
+          <span class="nav-toggle__bar"></span>
+          <span class="nav-toggle__bar"></span>
+        </button>
+        <nav class="site-nav" aria-label="Primary">
+          <ul>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#work">Work</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#testimonials">Testimonials</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+        <a class="cta" href="#contact">Start a project</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container">
+          <div class="hero__content">
+            <p class="eyebrow">Web design & development</p>
+            <h1>Bold digital experiences that convert visitors into customers.</h1>
+            <p>
+              Vertex Studio crafts responsive, accessible websites for startups
+              and established brands. From strategy to launch, we combine
+              research, storytelling, and technology to help you grow online.
+            </p>
+            <div class="hero__actions">
+              <a class="button button--primary" href="#work">See our work</a>
+              <a class="button" href="#services">What we do</a>
+            </div>
+          </div>
+          <div class="hero__media" role="img" aria-label="Screenshot collage of modern websites">
+            <div class="hero__card hero__card--one">
+              <h3>Conversion-focused</h3>
+              <p>UX research, prototyping, and CRO baked into every project.</p>
+            </div>
+            <div class="hero__card hero__card--two">
+              <h3>Lightning fast</h3>
+              <p>Optimized for Core Web Vitals with cutting-edge tooling.</p>
+            </div>
+            <div class="hero__card hero__card--three">
+              <h3>Effortless handoff</h3>
+              <p>Reusable design systems and clear documentation.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="partners" aria-label="Partner logos">
+        <div class="container">
+          <ul>
+            <li>Brightside Labs</li>
+            <li>Northwind</li>
+            <li>Greenwave</li>
+            <li>Studio Orion</li>
+            <li>Cloudforge</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="services" id="services">
+        <div class="container">
+          <header class="section-header">
+            <p class="eyebrow">Services</p>
+            <h2>Full-service digital partner from concept to launch</h2>
+            <p>
+              Collaborate with strategists, designers, and engineers who treat
+              your business like their own. We tailor our process to your team
+              and goals.
+            </p>
+          </header>
+          <div class="grid grid--three">
+            <article class="card">
+              <h3>Brand & strategy</h3>
+              <p>
+                Audience research, positioning workshops, and messaging playbooks
+                that set your brand apart.
+              </p>
+              <ul>
+                <li>Brand audits</li>
+                <li>Customer journey mapping</li>
+                <li>Content strategy</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Design systems</h3>
+              <p>
+                Scalable design language and component libraries to ship faster
+                with consistency.
+              </p>
+              <ul>
+                <li>UI/UX design</li>
+                <li>Prototyping & testing</li>
+                <li>Design tokens</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Engineering</h3>
+              <p>
+                Headless CMS, modern frameworks, and accessible experiences that
+                perform flawlessly.
+              </p>
+              <ul>
+                <li>Full-stack development</li>
+                <li>CMS implementation</li>
+                <li>Accessibility audits</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="work" id="work">
+        <div class="container">
+          <header class="section-header">
+            <p class="eyebrow">Recent work</p>
+            <h2>Results that speak for themselves</h2>
+            <p>
+              Every project focuses on measurable outcomes. Explore a snapshot of
+              recent engagements and the impact we delivered.
+            </p>
+          </header>
+          <div class="grid grid--two">
+            <article class="project">
+              <div class="project__badge">B2B SaaS</div>
+              <h3>Northwind Analytics</h3>
+              <p>
+                Increased qualified leads by 62% through a refreshed narrative,
+                modular landing pages, and marketing automation.
+              </p>
+              <dl>
+                <div>
+                  <dt>Timeline</dt>
+                  <dd>12 weeks</dd>
+                </div>
+                <div>
+                  <dt>Deliverables</dt>
+                  <dd>Brand identity, design system, Next.js build</dd>
+                </div>
+              </dl>
+              <a class="project__link" href="#contact">Launch a similar project</a>
+            </article>
+            <article class="project">
+              <div class="project__badge">E-commerce</div>
+              <h3>Greenwave Market</h3>
+              <p>
+                Helped a sustainable goods retailer triple online revenue with a
+                custom Shopify theme and A/B testing program.
+              </p>
+              <dl>
+                <div>
+                  <dt>Timeline</dt>
+                  <dd>8 weeks</dd>
+                </div>
+                <div>
+                  <dt>Deliverables</dt>
+                  <dd>UX strategy, headless storefront, Klaviyo automation</dd>
+                </div>
+              </dl>
+              <a class="project__link" href="#contact">Start your store</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="Project highlights">
+        <div class="container">
+          <div class="metric">
+            <span class="metric__value">120+</span>
+            <span class="metric__label">Projects launched</span>
+          </div>
+          <div class="metric">
+            <span class="metric__value">4.9/5</span>
+            <span class="metric__label">Average client rating</span>
+          </div>
+          <div class="metric">
+            <span class="metric__value">38%</span>
+            <span class="metric__label">Average conversion lift</span>
+          </div>
+          <div class="metric">
+            <span class="metric__value">24 hrs</span>
+            <span class="metric__label">Support response time</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="testimonials" id="testimonials">
+        <div class="container">
+          <header class="section-header">
+            <p class="eyebrow">Testimonials</p>
+            <h2>Clients partner with us for the long haul</h2>
+            <p>
+              Real feedback from marketing leaders, founders, and product teams
+              we collaborate with every day.
+            </p>
+          </header>
+          <div class="testimonial-slider" role="region" aria-live="polite">
+            <button class="slider__control slider__control--prev" aria-label="Previous testimonial">
+              &larr;
+            </button>
+            <ul class="testimonial-slider__list">
+              <li class="testimonial active">
+                <blockquote>
+                  “Vertex Studio is the rare partner that can guide strategy and
+                  execute flawlessly. They understood our complex product and
+                  launched a site that finally tells our story.”
+                </blockquote>
+                <div class="testimonial__meta">
+                  <span class="testimonial__name">Priya Desai</span>
+                  <span class="testimonial__role">CMO, Northwind Analytics</span>
+                </div>
+              </li>
+              <li class="testimonial">
+                <blockquote>
+                  “Their team feels like an extension of ours. The design system
+                  they built saved us countless engineering hours and improved
+                  accessibility across the board.”
+                </blockquote>
+                <div class="testimonial__meta">
+                  <span class="testimonial__name">Jason Lee</span>
+                  <span class="testimonial__role">VP Product, Brightside Labs</span>
+                </div>
+              </li>
+              <li class="testimonial">
+                <blockquote>
+                  “We saw a 3x increase in online revenue within two months of
+                  launch. The process was transparent, thoughtful, and fun.”
+                </blockquote>
+                <div class="testimonial__meta">
+                  <span class="testimonial__name">Sara Gómez</span>
+                  <span class="testimonial__role">Founder, Greenwave Market</span>
+                </div>
+              </li>
+            </ul>
+            <button class="slider__control slider__control--next" aria-label="Next testimonial">
+              &rarr;
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="pricing" id="pricing">
+        <div class="container">
+          <header class="section-header">
+            <p class="eyebrow">Pricing</p>
+            <h2>Transparent plans tailored to your stage</h2>
+            <p>
+              Need something custom? Get in touch and we’ll craft a proposal that
+              fits your roadmap.
+            </p>
+          </header>
+          <div class="grid grid--three">
+            <article class="plan">
+              <h3>Launchpad</h3>
+              <p class="plan__price">$6K</p>
+              <p class="plan__summary">Perfect for early-stage startups.</p>
+              <ul>
+                <li>Strategy workshop</li>
+                <li>5 custom pages</li>
+                <li>CMS setup</li>
+                <li>2 weeks of QA support</li>
+              </ul>
+              <a class="button button--outline" href="#contact">Book a call</a>
+            </article>
+            <article class="plan plan--featured">
+              <div class="plan__badge">Most popular</div>
+              <h3>Scale</h3>
+              <p class="plan__price">$12K</p>
+              <p class="plan__summary">Ideal for growing teams ready to scale.</p>
+              <ul>
+                <li>Audience research</li>
+                <li>10 custom pages</li>
+                <li>Design system starter</li>
+                <li>30 days optimization</li>
+              </ul>
+              <a class="button button--primary" href="#contact">Schedule intro</a>
+            </article>
+            <article class="plan">
+              <h3>Enterprise</h3>
+              <p class="plan__price">Custom</p>
+              <p class="plan__summary">For complex organizations and platforms.</p>
+              <ul>
+                <li>Dedicated product squad</li>
+                <li>Headless architecture</li>
+                <li>Compliance reviews</li>
+                <li>Retainer partnership</li>
+              </ul>
+              <a class="button button--outline" href="#contact">Talk to us</a>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-banner">
+        <div class="container">
+          <div class="cta-banner__content">
+            <h2>Let’s build your next big launch together.</h2>
+            <p>
+              Share your goals and we’ll prepare a tailored roadmap within two
+              business days.
+            </p>
+          </div>
+          <a class="button button--primary" href="#contact">Get started</a>
+        </div>
+      </section>
+
+      <section class="contact" id="contact">
+        <div class="container">
+          <div class="contact__intro">
+            <p class="eyebrow">Contact</p>
+            <h2>Tell us about your project</h2>
+            <p>
+              Fill out the form and we’ll respond within one business day. Prefer
+              email? Reach us at <a href="mailto:hello@vertex.studio">hello@vertex.studio</a>.
+            </p>
+          </div>
+          <form class="contact__form" novalidate>
+            <div class="form-field">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" autocomplete="name" required />
+              <p class="form-field__error" aria-live="polite"></p>
+            </div>
+            <div class="form-field">
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+              />
+              <p class="form-field__error" aria-live="polite"></p>
+            </div>
+            <div class="form-field">
+              <label for="company">Company</label>
+              <input id="company" name="company" type="text" autocomplete="organization" />
+            </div>
+            <div class="form-field">
+              <label for="budget">Estimated budget</label>
+              <select id="budget" name="budget">
+                <option value="" selected>Select a range</option>
+                <option value="under-5k">Under $5K</option>
+                <option value="5-10k">$5K – $10K</option>
+                <option value="10-25k">$10K – $25K</option>
+                <option value="25k+">$25K+</option>
+              </select>
+            </div>
+            <div class="form-field form-field--full">
+              <label for="message">Project details</label>
+              <textarea id="message" name="message" rows="5" required></textarea>
+              <p class="form-field__error" aria-live="polite"></p>
+            </div>
+            <button class="button button--primary" type="submit">Submit</button>
+            <p class="form__feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div>
+          <a class="brand" href="#top" aria-label="Vertex Studio home">
+            <span class="brand__mark" aria-hidden="true">V</span>
+            <span class="brand__text">Vertex Studio</span>
+          </a>
+          <p>
+            We’re a remote-first team designing and building web experiences for
+            ambitious companies worldwide.
+          </p>
+        </div>
+        <div class="footer__links">
+          <div>
+            <h3>Company</h3>
+            <ul>
+              <li><a href="#services">Services</a></li>
+              <li><a href="#work">Work</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Connect</h3>
+            <ul>
+              <li><a href="mailto:hello@vertex.studio">Email us</a></li>
+              <li><a href="https://www.linkedin.com" target="_blank" rel="noreferrer">LinkedIn</a></li>
+              <li><a href="https://dribbble.com" target="_blank" rel="noreferrer">Dribbble</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="site-footer__legal">© <span id="year"></span> Vertex Studio. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <script src="script.js" defer></script>
+  </body>
+</html>
