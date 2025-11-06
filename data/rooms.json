@@ -1,0 +1,34 @@
+[
+  {
+    "roomNumber": "101",
+    "type": "Standard",
+    "beds": 1,
+    "rate": 90,
+    "amenities": ["Wi-Fi", "TV", "Desk"],
+    "housekeepingStatus": "Clean"
+  },
+  {
+    "roomNumber": "102",
+    "type": "Standard",
+    "beds": 2,
+    "rate": 120,
+    "amenities": ["Wi-Fi", "TV", "Balcony"],
+    "housekeepingStatus": "Clean"
+  },
+  {
+    "roomNumber": "201",
+    "type": "Deluxe",
+    "beds": 1,
+    "rate": 160,
+    "amenities": ["Wi-Fi", "Smart TV", "Minibar"],
+    "housekeepingStatus": "Clean"
+  },
+  {
+    "roomNumber": "202",
+    "type": "Suite",
+    "beds": 2,
+    "rate": 250,
+    "amenities": ["Wi-Fi", "Smart TV", "Living Area", "Ocean View"],
+    "housekeepingStatus": "Clean"
+  }
+]

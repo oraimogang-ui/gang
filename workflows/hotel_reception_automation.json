@@ -1,0 +1,445 @@
+{
+  "name": "Hotel Reception Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Hotel Booking Request",
+        "formDescription": "Collect guest details, stay dates, and special requests for front-desk automation.",
+        "formFields": [
+          {
+            "fieldLabel": "Guest name",
+            "fieldType": "string",
+            "required": true,
+            "key": "guestName"
+          },
+          {
+            "fieldLabel": "Email",
+            "fieldType": "email",
+            "required": true,
+            "key": "email"
+          },
+          {
+            "fieldLabel": "Phone number",
+            "fieldType": "string",
+            "required": true,
+            "key": "phone"
+          },
+          {
+            "fieldLabel": "Room type",
+            "fieldType": "options",
+            "required": true,
+            "key": "roomType",
+            "options": [
+              "Standard",
+              "Deluxe",
+              "Suite"
+            ]
+          },
+          {
+            "fieldLabel": "Number of guests",
+            "fieldType": "number",
+            "required": true,
+            "key": "numGuests"
+          },
+          {
+            "fieldLabel": "Check-in date",
+            "fieldType": "date",
+            "required": true,
+            "key": "checkInDate"
+          },
+          {
+            "fieldLabel": "Check-out date",
+            "fieldType": "date",
+            "required": true,
+            "key": "checkOutDate"
+          },
+          {
+            "fieldLabel": "Special requests",
+            "fieldType": "string",
+            "required": false,
+            "key": "notes",
+            "options": [],
+            "textArea": true
+          }
+        ],
+        "formButtonLabel": "Submit booking request",
+        "options": {
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "96d3d8a3-7f1d-48a8-a751-89f03d3dbc49",
+      "name": "New Booking Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [
+        260,
+        300
+      ],
+      "webhookId": "hotel-booking-request"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const data = items[0].json;\nconst globalData = this.getWorkflowStaticData('global');\nif (!globalData.rooms || !Array.isArray(globalData.rooms) || globalData.rooms.length === 0) {\n  globalData.rooms = [\n    { roomNumber: '101', type: 'Standard', beds: 1, rate: 90, amenities: ['Wi-Fi', 'TV', 'Desk'], housekeepingStatus: 'Clean' },\n    { roomNumber: '102', type: 'Standard', beds: 2, rate: 120, amenities: ['Wi-Fi', 'TV', 'Balcony'], housekeepingStatus: 'Clean' },\n    { roomNumber: '201', type: 'Deluxe', beds: 1, rate: 160, amenities: ['Wi-Fi', 'Smart TV', 'Minibar'], housekeepingStatus: 'Clean' },\n    { roomNumber: '202', type: 'Suite', beds: 2, rate: 250, amenities: ['Wi-Fi', 'Smart TV', 'Living Area', 'Ocean View'], housekeepingStatus: 'Clean' }\n  ];\n}\nif (!globalData.reservations) {\n  globalData.reservations = [];\n}\nif (!globalData.housekeepingQueue) {\n  globalData.housekeepingQueue = [];\n}\nconst requiredFields = ['guestName', 'email', 'phone', 'roomType', 'numGuests', 'checkInDate', 'checkOutDate'];\nfor (const field of requiredFields) {\n  if (!data[field]) {\n    return [{ json: { bookingConfirmed: false, reason: 'MISSING_FIELD', message: `Missing required field: ${field}` } }];\n  }\n}\nconst checkInDate = new Date(data.checkInDate);\nconst checkOutDate = new Date(data.checkOutDate);\nif (Number.isNaN(checkInDate.getTime()) || Number.isNaN(checkOutDate.getTime())) {\n  return [{ json: { bookingConfirmed: false, reason: 'INVALID_DATE', message: 'The provided dates are invalid.' } }];\n}\nif (checkOutDate <= checkInDate) {\n  return [{ json: { bookingConfirmed: false, reason: 'DATE_RANGE', message: 'Check-out must be after check-in.' } }];\n}\nconst matchingRooms = globalData.rooms.filter(room => room.type.toLowerCase() === data.roomType.toLowerCase() && room.housekeepingStatus !== 'Out of Order');\nlet assignedRoom = null;\nfor (const thisRoom of matchingRooms) {\n  const hasConflict = globalData.reservations.some(reservation => {\n    const resStart = new Date(reservation.checkInDate);\n    const resEnd = new Date(reservation.checkOutDate);\n    const overlapsStay = reservation.status !== 'Cancelled' && reservation.roomNumber === thisRoom.roomNumber && resEnd > checkInDate && resStart < checkOutDate;\n    return overlapsStay;\n  });\n  if (!hasConflict) {\n    assignedRoom = thisRoom;\n    break;\n  }\n}\nif (!assignedRoom) {\n  return [{ json: { bookingConfirmed: false, reason: 'UNAVAILABLE', message: `No ${data.roomType} rooms are available for the selected dates.` } }];\n}\nconst nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));\nconst total = nights * assignedRoom.rate;\nconst confirmationCode = `H-${new Date().getFullYear()}-${(globalData.reservations.length + 1).toString().padStart(4, '0')}`;\nconst reservation = {\n  confirmationCode,\n  guestName: data.guestName,\n  email: data.email,\n  phone: data.phone,\n  roomNumber: assignedRoom.roomNumber,\n  roomType: assignedRoom.type,\n  checkInDate: data.checkInDate,\n  checkOutDate: data.checkOutDate,\n  numGuests: data.numGuests,\n  notes: data.notes || '',\n  nights,\n  total,\n  status: 'Booked',\n  createdAt: new Date().toISOString()\n};\nglobalData.reservations.push(reservation);\nassignedRoom.housekeepingStatus = 'Occupied';\nconst housekeepingTask = {\n  taskId: `HK-${confirmationCode}`,\n  roomNumber: assignedRoom.roomNumber,\n  task: `Turnaround for room ${assignedRoom.roomNumber} after ${data.checkOutDate}`,\n  dueDate: data.checkOutDate,\n  status: 'Scheduled'\n};\nglobalData.housekeepingQueue.push(housekeepingTask);\nreturn [{ json: { bookingConfirmed: true, message: 'Booking confirmed', confirmationCode, roomNumber: assignedRoom.roomNumber, roomType: assignedRoom.type, checkInDate: data.checkInDate, checkOutDate: data.checkOutDate, nights, total, email: data.email, guestName: data.guestName, phone: data.phone, notes: data.notes || '', housekeepingTask } }];"
+      },
+      "id": "1b1261ad-0fd3-47b0-8915-6a503c1f2af1",
+      "name": "Check & Save Booking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.bookingConfirmed}}"
+            }
+          ]
+        }
+      },
+      "id": "7a74ab71-68c3-47fe-bf8f-e8d69874e2de",
+      "name": "Booking Outcome",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "confirmed"
+            },
+            {
+              "name": "guestMessage",
+              "value": "={{`Thank you ${$json.guestName}! Your stay is confirmed. Confirmation code: ${$json.confirmationCode}.`}}"
+            },
+            {
+              "name": "guestEmailSubject",
+              "value": "={{`Booking Confirmation - ${$json.confirmationCode}`}}"
+            },
+            {
+              "name": "guestEmailBody",
+              "value": "={{`Hello ${$json.guestName},\\n\\nWe look forward to welcoming you from ${$json.checkInDate} to ${$json.checkOutDate} in room ${$json.roomNumber} (${ $json.roomType }).\\nTotal for ${$json.nights} night(s): $${$json.total}.\\n\\nIf you need to adjust anything, reply to this email.\\n\\nBest regards,\\nFront Desk`}}"
+            },
+            {
+              "name": "receptionEmailSubject",
+              "value": "={{`New booking: ${$json.guestName} (${ $json.confirmationCode })`}}"
+            },
+            {
+              "name": "receptionEmailBody",
+              "value": "={{`Guest: ${$json.guestName}\\nRoom: ${$json.roomNumber} (${ $json.roomType })\\nStay: ${$json.checkInDate} - ${$json.checkOutDate} (${ $json.nights } night(s))\\nNotes: ${$json.notes || 'None'}\\nPhone: ${$json.phone}`}}"
+            },
+            {
+              "name": "housekeepingEmailSubject",
+              "value": "={{`Housekeeping task for room ${$json.housekeepingTask.roomNumber}`}}"
+            },
+            {
+              "name": "housekeepingEmailBody",
+              "value": "={{`Task ID: ${$json.housekeepingTask.taskId}\\nRoom: ${$json.housekeepingTask.roomNumber}\\nTask: ${$json.housekeepingTask.task}\\nDue: ${$json.housekeepingTask.dueDate}`}}"
+            }
+          ]
+        }
+      },
+      "id": "49f23655-7b78-4b75-b3a6-8d47599a26c1",
+      "name": "Booking Success Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": false,
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "declined"
+            },
+            {
+              "name": "guestMessage",
+              "value": "={{$json.message}}"
+            }
+          ]
+        }
+      },
+      "id": "1074a833-99db-4aea-94c7-81b78057a2c1",
+      "name": "Booking Failure Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "frontdesk@example.com",
+        "toEmail": "={{$json.email}}",
+        "subject": "={{$json.guestEmailSubject}}",
+        "text": "={{$json.guestEmailBody}}"
+      },
+      "id": "d22d8e7d-8bc1-4f97-92f8-82d990baa1f2",
+      "name": "Send Confirmation Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "frontdesk@example.com",
+        "toEmail": "reception@example.com",
+        "subject": "={{$json.receptionEmailSubject}}",
+        "text": "={{$json.receptionEmailBody}}"
+      },
+      "id": "ce208585-32a8-4dbf-8b19-8ab9879dcf76",
+      "name": "Notify Reception",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "frontdesk@example.com",
+        "toEmail": "housekeeping@example.com",
+        "subject": "={{$json.housekeepingEmailSubject}}",
+        "text": "={{$json.housekeepingEmailBody}}"
+      },
+      "id": "9df6a8b3-fca7-4a17-8f41-3a745d4ab9a4",
+      "name": "Notify Housekeeping",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseData": "={{$json}}",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "a6b5f0b3-ef78-4d16-bfde-8db716d20e9c",
+      "name": "Respond to Guest (Success)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseData": "={{$json}}",
+          "responseMode": "lastNode"
+        }
+      },
+      "id": "02d355c4-e922-4b36-97c4-1f0c2a8ead64",
+      "name": "Respond to Guest (Failure)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyDay",
+              "hour": 7,
+              "minute": 0
+            }
+          ]
+        }
+      },
+      "id": "c1df7baf-1f90-4db0-bc2e-5f5f973c7a54",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        260,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "const globalData = this.getWorkflowStaticData('global');\nconst today = new Date();\nconst tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);\nconst checkIns = [];\nconst checkOuts = [];\nconst housekeeping = [];\nif (Array.isArray(globalData.reservations)) {\n  for (const reservation of globalData.reservations) {\n    const checkIn = new Date(reservation.checkInDate);\n    const checkOut = new Date(reservation.checkOutDate);\n    if (checkIn.toDateString() === today.toDateString()) {\n      checkIns.push(reservation);\n    }\n    if (checkOut.toDateString() === today.toDateString()) {\n      checkOuts.push(reservation);\n    }\n    if (checkOut.toDateString() === tomorrow.toDateString()) {\n      housekeeping.push({\n        taskId: `HK-${reservation.confirmationCode}`,\n        roomNumber: reservation.roomNumber,\n        dueDate: reservation.checkOutDate,\n        guestName: reservation.guestName,\n      });\n    }\n  }\n}\nconst summaryLines = [\n  `Check-ins today (${checkIns.length}):`,\n  ...checkIns.map(res => ` - ${res.guestName} in room ${res.roomNumber} (${res.checkInDate} - ${res.checkOutDate})`),\n  '',\n  `Check-outs today (${checkOuts.length}):`,\n  ...checkOuts.map(res => ` - ${res.guestName} from room ${res.roomNumber}`),\n  '',\n  `Housekeeping prep for tomorrow (${housekeeping.length}):`,\n  ...housekeeping.map(task => ` - Room ${task.roomNumber} after ${task.guestName}`),\n];\nreturn [{ json: { subject: `Daily front desk summary - ${today.toISOString().split('T')[0]}`, body: summaryLines.join('\\n') } }];"
+      },
+      "id": "bb0d0d46-ff5c-4b91-88a7-8ba1e67142aa",
+      "name": "Build Daily Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "frontdesk@example.com",
+        "toEmail": "reception@example.com",
+        "subject": "={{$json.subject}}",
+        "text": "={{$json.body}}"
+      },
+      "id": "2fd4389d-8db0-44b0-9dd0-0f8b045adb87",
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        820,
+        620
+      ]
+    }
+  ],
+  "connections": {
+    "New Booking Form": {
+      "main": [
+        [
+          {
+            "node": "Check & Save Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check & Save Booking": {
+      "main": [
+        [
+          {
+            "node": "Booking Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Outcome": {
+      "main": [
+        [
+          {
+            "node": "Booking Success Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Booking Failure Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Success Message": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Failure Message": {
+      "main": [
+        [
+          {
+            "node": "Respond to Guest (Failure)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Build Daily Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Daily Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Notify Reception",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Reception": {
+      "main": [
+        [
+          {
+            "node": "Notify Housekeeping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Housekeeping": {
+      "main": [
+        [
+          {
+            "node": "Respond to Guest (Success)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "id": "HotelReceptionAutomation"
+}

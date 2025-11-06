@@ -1,0 +1,14 @@
+[
+  {
+    "confirmationCode": "H-2024-0001",
+    "guestName": "Alice Johnson",
+    "email": "alice@example.com",
+    "phone": "+15551234567",
+    "roomNumber": "101",
+    "roomType": "Standard",
+    "checkInDate": "2024-07-20",
+    "checkOutDate": "2024-07-23",
+    "status": "Booked",
+    "balanceDue": 0
+  }
+]
