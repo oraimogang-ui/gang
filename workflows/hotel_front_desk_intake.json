@@ -1,0 +1,394 @@
+{
+  "name": "Hotel Front Desk Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "hotel-front-desk/new-reservation",
+        "formTitle": "New Reservation",
+        "formDescription": "Capture incoming reservation details for the front desk team.",
+        "responseMode": "lastNode",
+        "options": {
+          "submitButtonLabel": "Create Reservation",
+          "allowMultipleResponses": false
+        },
+        "fields": [
+          {
+            "fieldLabel": "Guest Name",
+            "fieldType": "text",
+            "fieldKey": "guestName",
+            "requiredField": true
+          },
+          {
+            "fieldLabel": "Guest Email",
+            "fieldType": "email",
+            "fieldKey": "guestEmail",
+            "requiredField": true
+          },
+          {
+            "fieldLabel": "Guest Phone",
+            "fieldType": "text",
+            "fieldKey": "guestPhone",
+            "requiredField": true
+          },
+          {
+            "fieldLabel": "Arrival Date",
+            "fieldType": "date",
+            "fieldKey": "arrivalDate",
+            "requiredField": true
+          },
+          {
+            "fieldLabel": "Departure Date",
+            "fieldType": "date",
+            "fieldKey": "departureDate",
+            "requiredField": true
+          },
+          {
+            "fieldLabel": "Room Type",
+            "fieldType": "select",
+            "fieldKey": "roomType",
+            "requiredField": true,
+            "options": [
+              {
+                "name": "Standard Queen",
+                "value": "standard-queen"
+              },
+              {
+                "name": "Deluxe King",
+                "value": "deluxe-king"
+              },
+              {
+                "name": "Family Suite",
+                "value": "family-suite"
+              }
+            ]
+          },
+          {
+            "fieldLabel": "Add-ons",
+            "fieldType": "multiSelect",
+            "fieldKey": "extras",
+            "options": [
+              {
+                "name": "Airport Pickup",
+                "value": "airport-pickup"
+              },
+              {
+                "name": "Breakfast",
+                "value": "breakfast"
+              },
+              {
+                "name": "Late Checkout",
+                "value": "late-checkout"
+              }
+            ]
+          },
+          {
+            "fieldLabel": "Special Notes",
+            "fieldType": "textarea",
+            "fieldKey": "notes"
+          }
+        ]
+      },
+      "id": "aa1f8f7a-bca3-4c09-9bb4-07456da43134",
+      "name": "Reservation Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const arrival = new Date($json.arrivalDate);\nconst departure = new Date($json.departureDate);\nconst msPerDay = 86400000;\nconst nights = Math.max(1, Math.round((departure - arrival) / msPerDay));\n\nconst bookingId = `B-${Date.now()}`;\n\nconst checkIn = new Date(arrival);\ncheckIn.setHours(15, 0, 0, 0);\nconst checkOut = new Date(departure);\ncheckOut.setHours(11, 0, 0, 0);\nconst housekeeping = new Date(departure);\nhousekeeping.setHours(12, 30, 0, 0);\n\nitem.json = {\n  bookingId,\n  createdAt: new Date().toISOString(),\n  guestName: $json.guestName,\n  guestEmail: $json.guestEmail,\n  guestPhone: $json.guestPhone,\n  arrivalDate: arrival.toISOString().slice(0, 10),\n  departureDate: departure.toISOString().slice(0, 10),\n  checkInDateTime: checkIn.toISOString(),\n  checkOutDateTime: checkOut.toISOString(),\n  housekeepingDateTime: housekeeping.toISOString(),\n  stayLengthNights: nights,\n  roomType: $json.roomType,\n  extras: Array.isArray($json.extras) ? $json.extras : ($json.extras ? [$json.extras] : []),\n  notes: $json.notes || '',\n  status: 'booked',\n  balanceDue: 0,\n  tasks: [\n    {\n      taskId: `${bookingId}-CHECKIN`,\n      bookingId,\n      taskType: 'check-in',\n      dueDateTime: checkIn.toISOString(),\n      assignedTo: 'Front Desk',\n      priority: 'high',\n      status: 'scheduled'\n    },\n    {\n      taskId: `${bookingId}-CHECKOUT`,\n      bookingId,\n      taskType: 'check-out',\n      dueDateTime: checkOut.toISOString(),\n      assignedTo: 'Front Desk',\n      priority: 'high',\n      status: 'scheduled'\n    },\n    {\n      taskId: `${bookingId}-HOUSEKEEPING`,\n      bookingId,\n      taskType: 'housekeeping',\n      dueDateTime: housekeeping.toISOString(),\n      assignedTo: 'Housekeeping',\n      priority: 'medium',\n      status: 'scheduled'\n    }\n  ]\n};\nreturn item;"
+      },
+      "id": "b9a0652b-0bd2-4bf2-9049-d0f93ebd3f1d",
+      "name": "Prepare Booking Payload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": [
+          {
+            "name": "bookingId",
+            "value": "={{$json.bookingId}}"
+          },
+          {
+            "name": "createdAt",
+            "value": "={{$json.createdAt}}"
+          },
+          {
+            "name": "guestName",
+            "value": "={{$json.guestName}}"
+          },
+          {
+            "name": "guestEmail",
+            "value": "={{$json.guestEmail}}"
+          },
+          {
+            "name": "guestPhone",
+            "value": "={{$json.guestPhone}}"
+          },
+          {
+            "name": "arrivalDate",
+            "value": "={{$json.arrivalDate}}"
+          },
+          {
+            "name": "departureDate",
+            "value": "={{$json.departureDate}}"
+          },
+          {
+            "name": "checkInDateTime",
+            "value": "={{$json.checkInDateTime}}"
+          },
+          {
+            "name": "checkOutDateTime",
+            "value": "={{$json.checkOutDateTime}}"
+          },
+          {
+            "name": "housekeepingDateTime",
+            "value": "={{$json.housekeepingDateTime}}"
+          },
+          {
+            "name": "stayLengthNights",
+            "value": "={{$json.stayLengthNights}}"
+          },
+          {
+            "name": "roomType",
+            "value": "={{$json.roomType}}"
+          },
+          {
+            "name": "extras",
+            "value": "={{$json.extras}}"
+          },
+          {
+            "name": "notes",
+            "value": "={{$json.notes}}"
+          },
+          {
+            "name": "status",
+            "value": "={{$json.status}}"
+          },
+          {
+            "name": "balanceDue",
+            "value": "={{$json.balanceDue}}"
+          }
+        ]
+      },
+      "id": "b8b2f1ac-2c6e-4bd5-ab26-3bcd8abc7853",
+      "name": "Booking Record",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "upsert",
+        "dataStoreId": "BOOKINGS_DATASTORE_ID",
+        "key": "={{$json.bookingId}}",
+        "data": "={{$json}}"
+      },
+      "id": "d4926bb4-8133-4415-8987-6b7ab0a9f502",
+      "name": "Store Booking",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [
+        460,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "splitOut",
+        "propertyName": "tasks"
+      },
+      "id": "4a9c55b7-3f6f-4d9f-8cce-743a8e9dbc44",
+      "name": "Split Task Items",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 1,
+      "position": [
+        210,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "values": [
+          {
+            "name": "taskId",
+            "value": "={{$json.taskId}}"
+          },
+          {
+            "name": "bookingId",
+            "value": "={{$json.bookingId}}"
+          },
+          {
+            "name": "taskType",
+            "value": "={{$json.taskType}}"
+          },
+          {
+            "name": "dueDateTime",
+            "value": "={{$json.dueDateTime}}"
+          },
+          {
+            "name": "assignedTo",
+            "value": "={{$json.assignedTo}}"
+          },
+          {
+            "name": "priority",
+            "value": "={{$json.priority}}"
+          },
+          {
+            "name": "status",
+            "value": "={{$json.status}}"
+          }
+        ],
+        "options": {
+          "addKeyName": true
+        }
+      },
+      "id": "2d872f97-4d39-4f65-9f54-9ef9671dd7c6",
+      "name": "Normalize Task Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        470,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "upsert",
+        "dataStoreId": "TASKS_DATASTORE_ID",
+        "key": "={{$json.taskId}}",
+        "data": "={{$json}}"
+      },
+      "id": "6ed3e7f2-f8bb-4a01-95a4-191b6c02a6a9",
+      "name": "Store Task",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [
+        710,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "values": [
+          {
+            "name": "bookingId",
+            "value": "={{$json.bookingId}}"
+          },
+          {
+            "name": "guestName",
+            "value": "={{$json.guestName}}"
+          },
+          {
+            "name": "checkIn",
+            "value": "={{$json.checkInDateTime}}"
+          },
+          {
+            "name": "checkOut",
+            "value": "={{$json.checkOutDateTime}}"
+          },
+          {
+            "name": "housekeeping",
+            "value": "={{$json.housekeepingDateTime}}"
+          },
+          {
+            "name": "tasksCreated",
+            "value": "={{$json.tasks.length}}"
+          }
+        ],
+        "options": {
+          "addKeyName": true
+        }
+      },
+      "id": "03cbc137-b51d-4492-9457-705d72dfcea3",
+      "name": "Reservation Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        460,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Reservation Form": {
+      "main": [
+        [
+          {
+            "node": "Prepare Booking Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Booking Payload": {
+      "main": [
+        [
+          {
+            "node": "Booking Record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Task Items",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reservation Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Record": {
+      "main": [
+        [
+          {
+            "node": "Store Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Task Items": {
+      "main": [
+        [
+          {
+            "node": "Normalize Task Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Task Payload": {
+      "main": [
+        [
+          {
+            "node": "Store Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
