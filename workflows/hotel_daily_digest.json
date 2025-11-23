@@ -1,0 +1,212 @@
+{
+  "name": "Hotel Daily Operations Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "hour": 6,
+            "minute": 0
+          },
+          {
+            "hour": 14,
+            "minute": 0
+          }
+        ]
+      },
+      "id": "4e6d7e9f-8f2b-4f10-9f46-b6385db7cbf2",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "getAll",
+        "dataStoreId": "BOOKINGS_DATASTORE_ID",
+        "returnAll": true
+      },
+      "id": "b9f82a63-3c54-48d7-901b-7fe6d0f8b0b4",
+      "name": "Fetch All Bookings",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const bookings = items.map(item => item.json);\nreturn [{ json: { bookings } }];"
+      },
+      "id": "4a0b5487-9435-4d2b-8d5b-d1e97d1c0c7e",
+      "name": "Aggregate Bookings",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        80,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "getAll",
+        "dataStoreId": "TASKS_DATASTORE_ID",
+        "returnAll": true
+      },
+      "id": "5c15a4f6-5a70-4ad6-9a43-69d3536f6d88",
+      "name": "Fetch All Tasks",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [
+        -180,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const tasks = items.map(item => item.json);\nreturn [{ json: { tasks } }];"
+      },
+      "id": "3a781546-2d0d-4621-8e6f-0b32fb4500a1",
+      "name": "Aggregate Tasks",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        80,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByIndex"
+      },
+      "id": "d2ea70e9-14c4-4b3b-ac33-64d01dfd11c1",
+      "name": "Merge Datasets",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [
+        340,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = item.json || {};\nconst bookings = data.bookings || [];\nconst tasks = data.tasks || [];\n\nconst now = new Date();\nconst today = new Date(now.getFullYear(), now.getMonth(), now.getDate());\nconst todayISO = today.toISOString().slice(0, 10);\n\nconst normalizeDate = (value) => {\n  if (!value) return null;\n  const dt = new Date(value);\n  if (Number.isNaN(dt.getTime())) return null;\n  return dt;\n};\n\nconst checkIns = bookings.filter(b => b.arrivalDate === todayISO);\nconst checkOuts = bookings.filter(b => b.departureDate === todayISO);\nconst stayOvers = bookings.filter(b => b.arrivalDate < todayISO && b.departureDate > todayISO);\n\nconst openTasks = tasks.filter(t => t.status !== 'completed');\nconst dueToday = openTasks.filter(t => {\n  const dt = normalizeDate(t.dueDateTime);\n  if (!dt) return false;\n  return dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();\n});\nconst overdue = openTasks.filter(t => {\n  const dt = normalizeDate(t.dueDateTime);\n  if (!dt) return false;\n  return dt < now;\n});\n\nconst formatBooking = (booking) => ({\n  bookingId: booking.bookingId,\n  guestName: booking.guestName,\n  roomType: booking.roomType,\n  arrivalDate: booking.arrivalDate,\n  departureDate: booking.departureDate,\n  checkInDateTime: booking.checkInDateTime,\n  checkOutDateTime: booking.checkOutDateTime\n});\n\nconst formatTask = (task) => ({\n  taskId: task.taskId,\n  bookingId: task.bookingId,\n  taskType: task.taskType,\n  dueDateTime: task.dueDateTime,\n  assignedTo: task.assignedTo,\n  priority: task.priority,\n  status: task.status\n});\n\nitem.json = {\n  digestId: `DIGEST-${todayISO}-${Date.now()}`,\n  generatedAt: now.toISOString(),\n  summary: {\n    totalBookings: bookings.length,\n    arrivalsToday: checkIns.length,\n    departuresToday: checkOuts.length,\n    stayOvers: stayOvers.length,\n    openTasks: openTasks.length,\n    tasksDueToday: dueToday.length,\n    overdueTasks: overdue.length\n  },\n  sections: {\n    arrivals: checkIns.map(formatBooking),\n    departures: checkOuts.map(formatBooking),\n    stayOvers: stayOvers.map(formatBooking),\n    tasksDueToday: dueToday.map(formatTask),\n    overdueTasks: overdue.map(formatTask)\n  }\n};\nreturn item;"
+      },
+      "id": "b7f96d7a-5d8e-4b80-b00c-131baf063bc0",
+      "name": "Build Digest",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        600,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "record",
+        "operation": "upsert",
+        "dataStoreId": "DIGESTS_DATASTORE_ID",
+        "key": "={{$json.digestId}}",
+        "data": "={{$json}}"
+      },
+      "id": "a74b4a10-2d42-4bbd-917a-2c1cc1a71119",
+      "name": "Save Digest",
+      "type": "n8n-nodes-base.dataStore",
+      "typeVersion": 1,
+      "position": [
+        860,
+        120
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch All Bookings",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch All Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Bookings": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Tasks": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Bookings": {
+      "main": [
+        [
+          {
+            "node": "Merge Datasets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Tasks": {
+      "main": [
+        [
+          {
+            "node": "Merge Datasets",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Datasets": {
+      "main": [
+        [
+          {
+            "node": "Build Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Digest": {
+      "main": [
+        [
+          {
+            "node": "Save Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
