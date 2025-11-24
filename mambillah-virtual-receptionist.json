@@ -1,0 +1,975 @@
+{
+  "name": "Mambillah Virtual Receptionist",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mambillah/receptionist",
+        "responseMode": "onReceived",
+        "options": {
+          "responseData": "{\"status\":\"received\"}"
+        }
+      },
+      "id": "54fc3cf8-a430-4278-8c15-fdc75c445a18",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "event": "incomingCall"
+      },
+      "id": "1c578b1a-0c12-4bd3-bf25-bd235f77f744",
+      "name": "Twilio Call Trigger",
+      "type": "n8n-nodes-base.twilioTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "passThrough"
+      },
+      "id": "ff3e457c-aaf1-4363-8b9f-2180eba4d9d7",
+      "name": "Merge Incoming",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 1,
+      "position": [
+        420,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"RecordingUrl\"] || ''}}"
+            }
+          ]
+        }
+      },
+      "id": "8b276550-eeba-4546-b4f3-0840f0a47fd1",
+      "name": "Has Recording?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        640,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.STT_HTTP_URL || 'http://vosk:2700'}}",
+        "options": {
+          "bodyContentType": "json"
+        },
+        "jsonParameters": true,
+        "body": "={\n  \"audioUrl\": $json.RecordingUrl || ''\n}"
+      },
+      "id": "803b4595-b105-4b89-8c0c-52b80a76b149",
+      "name": "HTTP STT (Vosk)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Normalize inbound text. If STT transcript exists, use it; otherwise use inbound text fields.\nconst text = $json.text || $json.TranscriptionText || $json.Body || ($json.result && $json.result.text) || '';\nreturn [{\n  source: $json.RecordingUrl ? 'call' : 'chat',\n  transcript: text.trim(),\n  raw: $json\n}];"
+      },
+      "id": "1f4e5734-8b74-4ddd-a240-ecd443439027",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "string": [
+            {
+              "name": "hotelAddress",
+              "value": "={{$env.HOTEL_ADDRESS || '#6/10 Omodisu Street, off Isawo Road, Ajaguro, Agric Bus Stop, Ikorodu, Lagos'}}"
+            },
+            {
+              "name": "reservationsPhone",
+              "value": "={{$env.RESERVATIONS_PHONE || '+234 915 097 1789'}}"
+            },
+            {
+              "name": "complaintsPhone",
+              "value": "={{$env.COMPLAINTS_PHONE || '+234 705 274 2525'}}"
+            },
+            {
+              "name": "reservationsEmail",
+              "value": "={{$env.RESERVATIONS_EMAIL || 'reservations@mambillahhotels.com'}}"
+            },
+            {
+              "name": "clubDays",
+              "value": "={{$env.CLUB_DAYS || 'Thursday\u2013Saturday'}}"
+            },
+            {
+              "name": "clubHours",
+              "value": "={{$env.CLUB_HOURS || '6 pm \u2013 2 am'}}"
+            },
+            {
+              "name": "gymHours",
+              "value": "={{$env.GYM_HOURS || '8 am \u2013 12 pm daily'}}"
+            }
+          ],
+          "json": [
+            {
+              "name": "roomCatalog",
+              "value": {
+                "Suite": {
+                  "price": 55000,
+                  "amenities": [
+                    "Separate seating room",
+                    "Marble bathroom",
+                    "Refrigerator",
+                    "Air conditioning",
+                    "Desk and chair",
+                    "Standing fan",
+                    "High-speed Wi-Fi",
+                    "Flat-screen TV",
+                    "Luxury toiletries"
+                  ]
+                },
+                "Deluxe Plus": {
+                  "price": 45000,
+                  "amenities": [
+                    "Spacious room",
+                    "Seating area",
+                    "Air conditioning",
+                    "Wi-Fi",
+                    "Flat-screen TV"
+                  ]
+                },
+                "Classic Deluxe": {
+                  "price": 35000,
+                  "amenities": [
+                    "Cozy room",
+                    "Air conditioning",
+                    "Wi-Fi",
+                    "Work desk",
+                    "Flat-screen TV"
+                  ]
+                },
+                "Standard": {
+                  "price": 25000,
+                  "amenities": [
+                    "Queen bed",
+                    "Wi-Fi",
+                    "Air conditioning",
+                    "Flat-screen TV"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "options": {
+          "merge": true
+        }
+      },
+      "id": "52aa407f-6776-43a4-9c3a-c9e67a55aa8d",
+      "name": "Set Static Info",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Lightweight keyword-based intent detection.\nconst text = ($json.transcript || '').toLowerCase();\nconst intents = [\n  { key: 'booking', keywords: ['book', 'reserve'] },\n  { key: 'availability', keywords: ['available', 'vacancy', 'vacancies', 'free room'] },\n  { key: 'room_info', keywords: ['room', 'suite', 'deluxe', 'standard', 'price', 'amenities'] },\n  { key: 'menu', keywords: ['menu', 'restaurant', 'bar', 'food', 'drink'] },\n  { key: 'club', keywords: ['club', 'club-m', 'dj', 'music'] },\n  { key: 'gym', keywords: ['gym', 'fitness'] },\n  { key: 'directions', keywords: ['direction', 'route', 'how do i get', 'map'] }\n];\nlet intent = 'fallback';\nfor (const item of intents) {\n  if (item.keywords.some(k => text.includes(k))) {\n    intent = item.key;\n    break;\n  }\n}\nreturn [{ ...$json, intent }];"
+      },
+      "id": "86dbc0ce-8b79-4c7f-bfb9-76126d4b260d",
+      "name": "Detect Intent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1480,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToEvaluate": "={{$json.intent}}",
+        "rules": [
+          {
+            "operation": "equal",
+            "value": "booking"
+          },
+          {
+            "operation": "equal",
+            "value": "availability"
+          },
+          {
+            "operation": "equal",
+            "value": "room_info"
+          },
+          {
+            "operation": "equal",
+            "value": "menu"
+          },
+          {
+            "operation": "equal",
+            "value": "club"
+          },
+          {
+            "operation": "equal",
+            "value": "gym"
+          },
+          {
+            "operation": "equal",
+            "value": "directions"
+          },
+          {
+            "operation": "equal",
+            "value": "fallback"
+          }
+        ]
+      },
+      "id": "dfc67cce-74b9-491f-918f-31c01f8fc985",
+      "name": "Intent Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.ROOMRESERVE_BASE_URL || 'http://localhost:8080'}}/api/rooms/available",
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "start",
+              "value": "={{$json.checkIn || ''}}"
+            },
+            {
+              "name": "end",
+              "value": "={{$json.checkOut || ''}}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json"
+        }
+      },
+      "id": "3fb21dd7-f4c1-41c6-8363-334bf076046b",
+      "name": "RoomReserve Availability",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check for availability of the requested category.\nconst requested = ($json.requestedRoom || 'standard').toLowerCase();\nconst available = ($json.availableRooms) || ($json[0]?.availableRooms) || [];\nconst match = available.find(r => (r.name || r.roomType || '').toLowerCase().includes(requested));\nif (!match) {\n  return [{ status: 'unavailable', intent: 'availability', response: `Sorry, ${requested} is not available for those dates. Can we try different dates or another room type?` }];\n}\nreturn [{ status: 'available', room: match, intent: 'booking', requestedRoom: requested, response: 'Room available, proceeding to guest capture.' }];"
+      },
+      "id": "7dea235e-932a-42ff-8b6a-f36f5738c599",
+      "name": "Validate Availability",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.status}}",
+              "operation": "equal",
+              "value2": "available"
+            }
+          ]
+        }
+      },
+      "id": "f726cb9c-15f9-4f43-acb4-bc815a9e0615",
+      "name": "Availability OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2280,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.ROOMRESERVE_BASE_URL || 'http://localhost:8080'}}/api/guest/create",
+        "options": {
+          "responseFormat": "json"
+        },
+        "jsonParameters": true,
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "body": "={\n  \"name\": $json.guestName,\n  \"email\": $json.guestEmail,\n  \"phoneNumber\": $json.guestPhone\n}"
+      },
+      "id": "47a52c5e-caef-4279-ad9a-c4fad61c5f21",
+      "name": "Create Guest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.ROOMRESERVE_BASE_URL || 'http://localhost:8080'}}/api/reservation/createReservation",
+        "options": {
+          "responseFormat": "json"
+        },
+        "jsonParameters": true,
+        "authentication": "basicAuth",
+        "sendBody": true,
+        "body": "={\n  \"guestId\": $json.body.id || $json.id,\n  \"roomType\": $json.requestedRoom,\n  \"startDate\": $json.checkIn,\n  \"endDate\": $json.checkOut\n}"
+      },
+      "id": "588664b3-5dca-4689-8c26-49b361ad89aa",
+      "name": "Create Reservation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        2680,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Build booking summary\nconst catalog = $json.roomCatalog || {};\nconst requested = ($json.requestedRoom || '').toLowerCase();\nconst matchKey = Object.keys(catalog).find(k => k.toLowerCase() === requested) || $json.requestedRoom;\nconst price = (matchKey && catalog[matchKey]?.price) || $json.room?.price || 'per-night rate';\nconst reservationId = $json.body?.id || $json.id || 'pending';\nreturn [{\n  response: `Reservation confirmed! ${$json.guestName || 'Guest'} booked a ${matchKey || requested} from ${$json.checkIn} to ${$json.checkOut}. Rate: \u20a6${price}. Reservation ID: ${reservationId}. Please pay on arrival.`,\n  reservationId,\n  intent: 'booking'\n}];"
+      },
+      "id": "6a739a6b-ae41-4962-a78d-88db455880bf",
+      "name": "Booking Summary",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Format room info by type\nconst catalog = $json.roomCatalog || {};\nconst parts = Object.entries(catalog).map(([name, data]) => `${name}: \u20a6${data.price} per night. Amenities: ${data.amenities.join(', ')}`);\nreturn [{ response: parts.join('\\n'), intent: 'room_info' }];"
+      },
+      "id": "807e57d3-2c1d-449d-88c2-75e2dd2e44af",
+      "name": "Room Info Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.MENU_JSON_URL}}",
+        "options": {
+          "responseFormat": "json",
+          "headers": {
+            "User-Agent": "mambillah-receptionist/1.0"
+          }
+        }
+      },
+      "id": "e3aff1b2-9ef9-4970-ad45-ff9b17119af2",
+      "name": "Fetch Menu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = Array.isArray($json) ? $json : ($json.body || []);\nconst lines = items.map(i => `${i.item}: \u20a6${i.price}`);\nlines.push('Executive & Bush Bar serves African and continental dishes like tilapia fish pepper soup, goat meat, and peppered turkey.');\nreturn [{ response: lines.join('\\n'), intent: 'menu' }];"
+      },
+      "id": "0cd2ac02-382f-4c4a-9c5c-ba1c5dea954a",
+      "name": "Format Menu",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ response: `Club-M is open ${$json.clubDays || 'Thursday\u2013Saturday'} from ${$json.clubHours || '6 pm \u2013 2 am'} with DJ, music, and a sound-proofed VIP section.`, intent: 'club' }];"
+      },
+      "id": "80970b2e-6e84-49e3-89d4-92b385e71b77",
+      "name": "Club Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ response: `Our gym is open daily from ${$json.gymHours || '8 am \u2013 12 pm'}, with state-of-the-art equipment and access for guests and walk-ins.`, intent: 'gym' }];"
+      },
+      "id": "03f0e1ba-f1a4-402f-b2ba-e71fc8b369a6",
+      "name": "Gym Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://nominatim.openstreetmap.org/search",
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "q",
+              "value": "={{$json.transcript}}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json",
+          "headers": {
+            "User-Agent": "mambillah-receptionist/1.0"
+          }
+        }
+      },
+      "id": "c81bac30-8ad5-470a-8b66-026516ecca32",
+      "name": "Geocode Caller",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://nominatim.openstreetmap.org/search",
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "q",
+              "value": "={{$json.hotelAddress}}"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": "json",
+          "headers": {
+            "User-Agent": "mambillah-receptionist/1.0"
+          }
+        }
+      },
+      "id": "3ecf8c37-c000-47ca-a8ec-0085cd219ac7",
+      "name": "Geocode Hotel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const caller = $items('Geocode Caller')[0]?.json?.body?.[0] || $items('Geocode Caller')[0]?.json?.[0];\nconst hotel = $json.body?.[0] || $json[0] || $items('Geocode Hotel')[0]?.json?.body?.[0];\nreturn [{ callerLat: caller?.lat, callerLon: caller?.lon, hotelLat: hotel?.lat, hotelLon: hotel?.lon, intent: 'directions' }];"
+      },
+      "id": "486357c3-44e3-4c3c-9554-ade05c88cb5a",
+      "name": "Collect Coords",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2280,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://router.project-osrm.org/route/v1/driving/{{$json.callerLon}},{{$json.callerLat}};{{$json.hotelLon}},{{$json.hotelLat}}?overview=false&steps=true",
+        "options": {
+          "responseFormat": "json",
+          "headers": {
+            "User-Agent": "mambillah-receptionist/1.0"
+          }
+        }
+      },
+      "id": "d120c6cc-b693-4d70-9772-c1b2ad1c9257",
+      "name": "OSRM Route",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const data = $json.routes ? $json : ($json.body || {});\nconst legs = data.routes?.[0]?.legs || [];\nconst steps = legs.flatMap(l => l.steps || []);\nconst directions = steps.map((s, i) => `${i + 1}. ${s.maneuver?.instruction || s.name || 'Continue'}`);\nreturn [{ response: directions.join('\\n') || 'Directions unavailable right now. Please try again.', intent: 'directions' }];"
+      },
+      "id": "56aa2dd4-6731-4927-874e-d31935d294e4",
+      "name": "Format Directions",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2680,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ response: 'I want to make sure I understand. Are you asking about booking, availability, room details, the menu, directions, or something else? I can also transfer you to a human if needed.', intent: 'fallback' }];"
+      },
+      "id": "1ee4b4ff-36f2-48ff-9a7f-67f682da4458",
+      "name": "Fallback Clarify",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1880,
+        1220
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "execute",
+        "database": "={{$env.AUDIT_DB_PATH || '/home/node/.n8n/mambillah-audit.sqlite'}}",
+        "statement": "CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT, intent TEXT, transcript TEXT, response TEXT); INSERT INTO audit (created_at, intent, transcript, response) VALUES (datetime('now'), :intent, :transcript, :response);",
+        "values": {
+          "namedValues": [
+            {
+              "name": "intent",
+              "value": "={{$json.intent || 'unknown'}}"
+            },
+            {
+              "name": "transcript",
+              "value": "={{$json.transcript || ''}}"
+            },
+            {
+              "name": "response",
+              "value": "={{$json.response || $json.message || ''}}"
+            }
+          ],
+          "string": []
+        }
+      },
+      "id": "cae30117-f172-418c-ae41-f8ed5b932744",
+      "name": "SQLite Audit Log",
+      "type": "n8n-nodes-base.sqlite",
+      "typeVersion": 1,
+      "position": [
+        2920,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ response: $json.response || 'Acknowledged.' }"
+      },
+      "id": "33a5bfd5-a67f-4e88-9638-24f39f31f5cb",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        620
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge Incoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio Call Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge Incoming",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Incoming": {
+      "main": [
+        [
+          {
+            "node": "Has Recording?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Recording?": {
+      "main": [
+        [
+          {
+            "node": "HTTP STT (Vosk)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP STT (Vosk)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Set Static Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Static Info": {
+      "main": [
+        [
+          {
+            "node": "Detect Intent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Intent": {
+      "main": [
+        [
+          {
+            "node": "Intent Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Switch": {
+      "main": [
+        [
+          {
+            "node": "RoomReserve Availability",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RoomReserve Availability",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Room Info Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Club Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gym Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Geocode Caller",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Clarify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RoomReserve Availability": {
+      "main": [
+        [
+          {
+            "node": "Validate Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Availability": {
+      "main": [
+        [
+          {
+            "node": "Availability OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availability OK?": {
+      "main": [
+        [
+          {
+            "node": "Create Guest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Guest": {
+      "main": [
+        [
+          {
+            "node": "Create Reservation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Reservation": {
+      "main": [
+        [
+          {
+            "node": "Booking Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking Summary": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Room Info Response": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Menu": {
+      "main": [
+        [
+          {
+            "node": "Format Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Menu": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Club Response": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gym Response": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geocode Caller": {
+      "main": [
+        [
+          {
+            "node": "Geocode Hotel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Geocode Hotel": {
+      "main": [
+        [
+          {
+            "node": "Collect Coords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Coords": {
+      "main": [
+        [
+          {
+            "node": "OSRM Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OSRM Route": {
+      "main": [
+        [
+          {
+            "node": "Format Directions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Directions": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Clarify": {
+      "main": [
+        [
+          {
+            "node": "SQLite Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SQLite Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionTimeout": 900
+  },
+  "versionId": "93da1cca-ca66-45c9-a159-a3225e3dec9f"
+}
