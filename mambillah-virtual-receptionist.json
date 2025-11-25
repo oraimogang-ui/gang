@@ -254,7 +254,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.ROOMRESERVE_BASE_URL || 'http://localhost:8080'}}/api/rooms/available",
+        "url": "={{$env.ROOMRESERVE_BASE_URL || 'https://roomreserve.example.com'}}/api/rooms/available",
         "queryParametersUi": {
           "parameter": [
             {
@@ -316,7 +316,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.ROOMRESERVE_BASE_URL || 'http://localhost:8080'}}/api/guest/create",
+        "url": "={{$env.ROOMRESERVE_BASE_URL || 'https://roomreserve.example.com'}}/api/guest/create",
         "options": {
           "responseFormat": "json"
         },
@@ -336,7 +336,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.ROOMRESERVE_BASE_URL || 'http://localhost:8080'}}/api/reservation/createReservation",
+        "url": "={{$env.ROOMRESERVE_BASE_URL || 'https://roomreserve.example.com'}}/api/reservation/createReservation",
         "options": {
           "responseFormat": "json"
         },

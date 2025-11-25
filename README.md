@@ -25,7 +25,7 @@ This repository provides everything you need to deploy an n8n workflow that acts
    ```bash
    docker-compose up -d
    ```
-3. By default, the API listens on `http://localhost:8080` and exposes authentication plus endpoints for rooms, availability, reservations, and guests. Create an API user in the RoomReserve UI or via the `/api/auth/register` endpoint, then authenticate in n8n using the HTTP Request node's basic auth fields.
+3. By default, the API listens on `http://localhost:8080` when launched locally. In production, expose it on a reachable hostname (e.g., `https://roomreserve.example.com`) and open the port in your reverse proxy. The API exposes authentication plus endpoints for rooms, availability, reservations, and guests. Create an API user in the RoomReserve UI or via the `/api/auth/register` endpoint, then authenticate in n8n using the HTTP Request node's basic auth fields.
 
 ### Menu & drinks dataset
 - Create or fork a simple GitHub repo containing a `menu.json` file (or use GitHub Gist raw URLs). Example file contents:
@@ -76,7 +76,7 @@ Configure these in n8n (Settings → Environment Variables or via a Set node):
 
 | Variable | Purpose |
 | --- | --- |
-| `ROOMRESERVE_BASE_URL` | Base URL of the RoomReserve API (e.g., `http://localhost:8080`). |
+| `ROOMRESERVE_BASE_URL` | Base URL of the RoomReserve API (e.g., `https://roomreserve.example.com`). |
 | `ROOMRESERVE_USERNAME` / `ROOMRESERVE_PASSWORD` | Basic auth for RoomReserve endpoints. |
 | `MENU_JSON_URL` | Raw GitHub URL of the `menu.json` file. |
 | `STT_HTTP_URL` | Base URL of your Vosk STT server (optional if transcript already provided). |
@@ -92,7 +92,7 @@ Configure these in n8n (Settings → Environment Variables or via a Set node):
 Room prices and features are stored inside the workflow Set node and can be edited after import.
 
 ## 5) Import the workflow
-1. Start n8n and open `http://localhost:5678`.
+1. Start n8n on a public URL (for example behind a reverse proxy such as Traefik or Nginx) and open `https://n8n.yourdomain.com`.
 2. Click **Import from File** and select `mambillah-virtual-receptionist.json` from this repo.
 3. Open each HTTP Request node and point it at your credentials:
    - **RoomReserve** nodes: Basic Auth or header-based token.
@@ -101,7 +101,7 @@ Room prices and features are stored inside the workflow Set node and can be edit
 4. Update the Webhook URL (if using the Webhook trigger) or Twilio callback URL (if using the Twilio Trigger) to match your public endpoint.
 
 ## 6) Workflow logic (high level)
-- Triggered by either a **Webhook** or **Twilio Call Trigger**.
+- Triggered by either a **Webhook** or **Twilio Call Trigger**. All nodes used are standard, verified n8n nodes available as of 24-Nov-2025; no custom community code is required.
 - If audio is present, it is sent to a Vosk STT HTTP endpoint; otherwise, incoming text is used directly.
 - A **Code** node classifies intent: booking, availability, room info, menu, club, gym, or directions. Unknown intent leads to clarifying questions or escalation.
 - Static hotel info (address, hours, contact numbers, room prices/features) is loaded via a **Set** node.
