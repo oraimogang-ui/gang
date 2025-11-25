@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project “Chameleon” - Content Automation Framework</title>
+  <style>
+    :root {
+      --bg: #0c1117;
+      --panel: #111927;
+      --accent: #4fd1c5;
+      --text: #e5edf5;
+      --muted: #9fb3c8;
+      --border: #1f2a3c;
+      --glow: 0 20px 60px rgba(79, 209, 197, 0.25);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(79, 209, 197, 0.07), transparent 32%),
+                  radial-gradient(circle at 80% 10%, rgba(99, 179, 237, 0.08), transparent 34%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 48px 18px 64px;
+      letter-spacing: 0.01em;
+    }
+
+    header {
+      max-width: 1200px;
+      margin: 0 auto 32px;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    @media (max-width: 960px) {
+      header {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .title-block {
+      background: linear-gradient(135deg, rgba(79, 209, 197, 0.08), rgba(99, 179, 237, 0.04));
+      border: 1px solid var(--border);
+      padding: 26px;
+      border-radius: var(--radius);
+      box-shadow: var(--glow);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 38px);
+      letter-spacing: 0.02em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(79, 209, 197, 0.1);
+      border: 1px solid rgba(79, 209, 197, 0.3);
+      border-radius: 999px;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .summary {
+      color: var(--muted);
+      margin: 14px 0 0;
+      line-height: 1.6;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .meta-item {
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: var(--radius);
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+    }
+
+    .principles, .phases {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .card strong {
+      color: var(--text);
+    }
+
+    .list {
+      margin: 10px 0;
+      padding-left: 16px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .list li { margin: 6px 0; }
+
+    .phase-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--text);
+    }
+
+    .badge {
+      background: rgba(79, 209, 197, 0.15);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(79, 209, 197, 0.3);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    .stack {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .chip {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+    }
+
+    footer {
+      max-width: 1200px;
+      margin: 22px auto 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-block">
+      <div class="pill">Blueprint • Conceptual</div>
+      <h1>Project “Chameleon”</h1>
+      <p class="summary">End-to-end automation framework for a modern animation studio, orchestrating every phase from script ingestion to final distribution with data-driven visibility.</p>
+    </div>
+    <div class="meta">
+      <div class="meta-item">
+        <h3>Version</h3>
+        <p class="summary">2.0 • Conceptual Blueprint</p>
+      </div>
+      <div class="meta-item">
+        <h3>Objectives</h3>
+        <p class="summary">Increase efficiency, reduce errors, fortify security, and deliver real-time production insight.</p>
+      </div>
+      <div class="meta-item">
+        <h3>Guiding Tone</h3>
+        <p class="summary">Technical, authoritative, and professional—crafted for pipeline and production stakeholders.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Core Principles</h2>
+      <div class="principles">
+        <div class="card">
+          <strong>Single Source of Truth</strong>
+          <ul class="list">
+            <li>All assets, tasks, and statuses flow through the production tracker (ShotGrid, Ftrack).</li>
+            <li>Automations pull inputs and write results directly to the tracker.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>API-First Integration</strong>
+          <ul class="list">
+            <li>Every pipeline tool exposes APIs for automation and data exchange.</li>
+            <li>Enables consistent validation, publishing, and notifications.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>Automate, Don’t Annihilate</strong>
+          <ul class="list">
+            <li>Targets repetitive, non-creative tasks while empowering artist choices.</li>
+            <li>Human approvals and creative reviews remain explicit milestones.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>Data-Driven Decisions</strong>
+          <ul class="list">
+            <li>Continuous logging feeds dashboards for progress, budget, and capacity.</li>
+            <li>Alerts highlight bottlenecks before they threaten delivery.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>Scalability</strong>
+          <ul class="list">
+            <li>On-demand compute through cloud bursting augments the render farm.</li>
+            <li>Elastic storage tiers balance high-performance NAS with archival.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Pipeline Phases & Automation</h2>
+      <div class="phases">
+        <div class="card">
+          <div class="phase-title"><strong>Phase 1: Pre-Production</strong><span class="badge">Ingestion</span></div>
+          <ul class="list">
+            <li><strong>Script Ingestion:</strong> Parse commits, tag scenes/characters/locations, and seed tracker tasks for storyboard, VisDev, and modeling.</li>
+            <li><strong>Asset Publish:</strong> Validate naming and tech checks, version assets in DAM, set status to Pending Review, and notify supervisors.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="phase-title"><strong>Phase 2: Production</strong><span class="badge">Shots</span></div>
+          <ul class="list">
+            <li><strong>Scene Assembly:</strong> Generate base scenes, pull approved assets, save to project, and link back to the tracker.</li>
+            <li><strong>Dailies:</strong> Render playblasts with burn-ins, transcode to MP4, upload to review systems, and add to playlists.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="phase-title"><strong>Phase 3: Post-Production</strong><span class="badge">Render & Comp</span></div>
+          <ul class="list">
+            <li><strong>Render Farm:</strong> Prioritize and submit jobs; burst to cloud when local queues spike.</li>
+            <li><strong>Post-QC:</strong> Scan sequences for missing frames, update to Ready for Comp, and pre-build compositing scripts with AOVs.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="phase-title"><strong>Phase 4: Editorial & Sound</strong><span class="badge">Conform</span></div>
+          <ul class="list">
+            <li><strong>Edit Conform:</strong> Parse new EDL/XML, flag new or retimed shots, and adjust tracker statuses for downstream work.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="phase-title"><strong>Phase 5: Finalization</strong><span class="badge">Delivery</span></div>
+          <ul class="list">
+            <li><strong>Mastering:</strong> Transcode locked episodes to required profiles (4K ProRes, HD H.264, platform variants).</li>
+            <li><strong>Packaging & Delivery:</strong> Bundle deliverables, create IMF/DPP packages, deliver via high-speed transfer, and log checksums.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <section style="max-width: 1200px; margin: 24px auto 0;">
+    <h2>Core Technology Stack</h2>
+    <div class="stack">
+      <div class="chip"><strong>Tracking:</strong> Autodesk ShotGrid</div>
+      <div class="chip"><strong>DAM:</strong> Integrated with ShotGrid / Alienbrain</div>
+      <div class="chip"><strong>DCCs:</strong> Maya, Houdini, Substance Suite, Nuke</div>
+      <div class="chip"><strong>Version Control:</strong> Perforce (binaries) + Git (scripts)</div>
+      <div class="chip"><strong>Render Management:</strong> AWS Thinkbox Deadline</div>
+      <div class="chip"><strong>Compute:</strong> On-prem + AWS EC2 Spot</div>
+      <div class="chip"><strong>Storage:</strong> NAS + S3 Glacier</div>
+      <div class="chip"><strong>Scripting:</strong> Python 3, ShotGrid API, PySide/PyQt</div>
+      <div class="chip"><strong>Communication:</strong> Slack bots, Email</div>
+      <div class="chip"><strong>Review:</strong> ShotGrid RV, SyncSketch</div>
+    </div>
+  </section>
+
+  <footer>
+    Built to keep automation authoritative, observable, and artist-first.
+  </footer>
+</body>
+</html>
