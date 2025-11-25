@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Nexus | Futuristic Digital Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise-overlay" aria-hidden="true"></div>
+  <header class="hero" id="top">
+    <nav class="nav">
+      <a href="#top" class="logo">Neon Nexus</a>
+      <button class="nav__toggle" aria-expanded="false" aria-controls="nav-menu">
+        <span class="visually-hidden">Toggle navigation</span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav__list" id="nav-menu">
+        <li><a href="#blog">Blog</a></li>
+        <li><a href="#learning">Learning Hub</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#assets">Assets</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="hero__content">
+      <p class="hero__eyebrow">Futuristic experiences for visionary minds</p>
+      <h1>Build. Learn. Launch. Manage.</h1>
+      <p class="hero__lead">
+        Neon Nexus is your unified command center — explore insights from our blog, enroll in immersive learning paths, hire us for cutting-edge experiences, and organize your digital assets in a single pulse.
+      </p>
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="#learning">Start Learning</a>
+        <a class="btn btn--ghost" href="#assets">Manage Assets</a>
+      </div>
+    </div>
+    <div class="hero__metrics">
+      <div>
+        <span class="metric__number" data-count="120">0</span>
+        <span class="metric__label">Projects Deployed</span>
+      </div>
+      <div>
+        <span class="metric__number" data-count="48">0</span>
+        <span class="metric__label">Courses & Labs</span>
+      </div>
+      <div>
+        <span class="metric__number" data-count="5">0</span>
+        <span class="metric__label">TB Assets Managed</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="section" id="blog" aria-labelledby="blog-heading">
+      <div class="section__header">
+        <h2 id="blog-heading">Insights from the Quantum Blog</h2>
+        <p>Stay ahead with trend analyses, deep dives, and playbooks from the frontier of digital experiences.</p>
+      </div>
+      <div class="blog__grid" id="blog-list" role="list"></div>
+    </section>
+
+    <section class="section section--gradient" id="learning" aria-labelledby="learning-heading">
+      <div class="section__header">
+        <h2 id="learning-heading">Learning Hub</h2>
+        <p>Navigate modular paths designed to upskill your team in future-ready disciplines.</p>
+      </div>
+      <div class="learning__filters">
+        <label for="learning-filter" class="visually-hidden">Filter learning tracks</label>
+        <select id="learning-filter">
+          <option value="all">All tracks</option>
+          <option value="design">Design Intelligence</option>
+          <option value="development">Development Ops</option>
+          <option value="strategy">Strategic Foresight</option>
+        </select>
+      </div>
+      <div class="learning__grid" id="learning-list"></div>
+    </section>
+
+    <section class="section" id="portfolio" aria-labelledby="portfolio-heading">
+      <div class="section__header">
+        <h2 id="portfolio-heading">Portfolio &amp; Services</h2>
+        <p>From immersive brand worlds to data-rich control centers, we deliver multi-dimensional solutions.</p>
+      </div>
+      <div class="portfolio__grid" id="portfolio-list"></div>
+    </section>
+
+    <section class="section section--dark" id="assets" aria-labelledby="assets-heading">
+      <div class="section__header">
+        <h2 id="assets-heading">Digital Asset Manager</h2>
+        <p>Catalog, tag, and retrieve critical assets with our lightweight in-browser vault.</p>
+      </div>
+      <div class="assets__wrapper">
+        <form class="asset-form" id="asset-form" aria-describedby="asset-help">
+          <div class="form__row">
+            <label for="asset-name">Asset Name</label>
+            <input type="text" id="asset-name" name="asset-name" required placeholder="Neural Interface Mockups" />
+          </div>
+          <div class="form__row">
+            <label for="asset-type">Type</label>
+            <select id="asset-type" name="asset-type" required>
+              <option value="">Select type</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="document">Document</option>
+              <option value="code">Code</option>
+              <option value="audio">Audio</option>
+            </select>
+          </div>
+          <div class="form__row">
+            <label for="asset-link">Access URL</label>
+            <input type="url" id="asset-link" name="asset-link" required placeholder="https://" />
+          </div>
+          <div class="form__row">
+            <label for="asset-tags">Tags (comma separated)</label>
+            <input type="text" id="asset-tags" name="asset-tags" placeholder="prototype, ui" />
+          </div>
+          <p id="asset-help" class="form__help">Entries are stored in your browser so you can revisit them anytime.</p>
+          <button type="submit" class="btn btn--primary">Add Asset</button>
+        </form>
+        <aside class="asset-controls">
+          <label for="asset-search" class="visually-hidden">Search assets</label>
+          <input type="search" id="asset-search" placeholder="Search by name or tag" />
+          <button class="btn btn--ghost" id="asset-export">Export JSON</button>
+        </aside>
+        <div class="asset-list" id="asset-list" role="list"></div>
+      </div>
+    </section>
+
+    <section class="section section--contact" id="contact" aria-labelledby="contact-heading">
+      <div class="section__header">
+        <h2 id="contact-heading">Ready to engineer the future?</h2>
+        <p>Schedule a strategy lab or request a bespoke prototype. Our team will respond within 48 hours.</p>
+      </div>
+      <form class="contact-form">
+        <div class="form__row">
+          <label for="contact-name">Name</label>
+          <input type="text" id="contact-name" name="contact-name" placeholder="Alex Quantum" required />
+        </div>
+        <div class="form__row">
+          <label for="contact-email">Email</label>
+          <input type="email" id="contact-email" name="contact-email" placeholder="you@neonnexus.io" required />
+        </div>
+        <div class="form__row">
+          <label for="contact-topic">Topic</label>
+          <select id="contact-topic" name="contact-topic">
+            <option value="consultation">Consultation</option>
+            <option value="training">Training</option>
+            <option value="speaking">Speaking</option>
+            <option value="partnership">Partnership</option>
+          </select>
+        </div>
+        <div class="form__row">
+          <label for="contact-message">Message</label>
+          <textarea id="contact-message" name="contact-message" rows="4" placeholder="Tell us about your mission"></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary">Transmit</button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <span class="logo">Neon Nexus</span>
+      <p class="footer__text">© <span id="year"></span> Neon Nexus Labs. Building parallel futures and digital realities.</p>
+    </div>
+    <ul class="footer__links">
+      <li><a href="#blog">Blog</a></li>
+      <li><a href="#learning">Learning</a></li>
+      <li><a href="#portfolio">Portfolio</a></li>
+      <li><a href="#assets">Assets</a></li>
+    </ul>
+    <div class="footer__social">
+      <a href="https://dribbble.com" aria-label="Dribbble"><span aria-hidden="true">⌘</span></a>
+      <a href="https://behance.net" aria-label="Behance"><span aria-hidden="true">⚛︎</span></a>
+      <a href="https://linkedin.com" aria-label="LinkedIn"><span aria-hidden="true">◆</span></a>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
