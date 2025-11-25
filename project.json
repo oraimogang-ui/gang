@@ -1,0 +1,273 @@
+{
+  "project": "Chameleon",
+  "version": "2.2",
+  "description": "API-first n8n Cloud automation blueprint for a modern animation studio; workflows orchestrate production, render, editorial, and delivery via cloud-accessible services.",
+  "core_principles": [
+    "Single Source of Truth in ShotGrid/Ftrack with REST read/write",
+    "API-first integration via HTTP Request, Webhook, vendor nodes, and Function transforms",
+    "Automate repetitive tasks while keeping approvals human-in-the-loop",
+    "Data and observability emitted to SSoT plus metrics sink",
+    "Elastic compute orchestration for render/transcode via cloud APIs"
+  ],
+  "canonical_data_model": {
+    "project_id": "proj-001",
+    "show_id": "show-01",
+    "episode_id": "ep-101",
+    "sequence_id": "seq-010",
+    "shot_id": "sh-010_020",
+    "asset": {
+      "asset_id": "ast-001",
+      "asset_type": "character|prop|set|fx"
+    },
+    "task": {
+      "task_id": "tk-123",
+      "task_type": "layout|animation|lighting|comp|review|delivery",
+      "status": "Not Started|In Progress|Pending Review|Approved|Ready for Render|Ready for Comp|Delivered"
+    },
+    "version_id": "v###",
+    "users": {
+      "artist_id": "usr-01",
+      "supervisor_id": "usr-02"
+    },
+    "media": {
+      "file_url": "https://...",
+      "storage": "s3|gcs|dam"
+    },
+    "audit": {
+      "source": "webhook|manual",
+      "script_version": "commit-sha"
+    }
+  },
+  "core_router": {
+    "workflow_name": "CHM-Core-Router",
+    "trigger": "Webhook subscribed to ShotGrid, Git, DAM, and render callbacks",
+    "normalization": "Function node maps inbound payloads into canonical data model and action",
+    "routing": [
+      { "event": "script", "workflow": "CHM-PreProd-Script-Ingestion" },
+      { "event": "asset_publish", "workflow": "CHM-PreProd-Asset-Publish" },
+      { "event": "layout_status_in_progress", "workflow": "CHM-Prod-Scene-Assembly" },
+      { "event": "animation_publish", "workflow": "CHM-Prod-Dailies-Generation" },
+      { "event": "ready_for_render", "workflow": "CHM-Post-Render-Management" },
+      { "event": "render_complete", "workflow": "CHM-Post-QC-Comp-Prep" },
+      { "event": "editorial_edl", "workflow": "CHM-Editorial-Conform" },
+      { "event": "picture_lock_delivery", "workflow": "CHM-Final-Mastering-Transcode" }
+    ],
+    "error_handling": [
+      "Error Trigger logs event, status, duration to SSoT event_log",
+      "Slack notification with context and stack trace link"
+    ],
+    "security": [
+      "Validate webhook signatures",
+      "Reject unknown origins with 401"
+    ]
+  },
+  "phases": [
+    {
+      "id": 1,
+      "name": "Pre-Production & Asset Ingestion",
+      "goal": "Automate script ingestion, tagging, and asset ingestion into SSoT.",
+      "workflows": [
+        {
+          "name": "CHM-PreProd-Script-Ingestion",
+          "trigger": "Webhook from Git with repo/branch/file path/commit SHA",
+          "nodes": [
+            "HTTP Request → Git API fetches script blob",
+            "Function (Script Parser) calls NLP/LLM to extract scenes/characters/locations/props and script_hash",
+            "IF compares script_hash vs last stored hash in ShotGrid",
+            "HTTP Request creates/updates ShotGrid tasks per scene with script_version",
+            "HTTP Request stores script artifact and metadata in cloud storage",
+            "HTTP Request writes script_log entry with impacts",
+            "Slack/Email notifies showrunner and leads"
+          ],
+          "logging_errors": [
+            "On NLP failure mark ingest_failed, send alert, and attach error note",
+            "Emit parse duration and created task count to metrics sink"
+          ],
+          "outputs": [
+            "Tasks linked to script version and sequences",
+            "Stored artifact reference and script log entries"
+          ]
+        },
+        {
+          "name": "CHM-PreProd-Asset-Publish",
+          "trigger": "Webhook from DCC publish tool or scheduled DAM poll",
+          "nodes": [
+            "Function/Set validates naming, asset_type, project_id, sequence_id/shot_id",
+            "HTTP Request optional Asset Validation Service",
+            "IF on validation failure updates ShotGrid status to Publish Rejected and notifies artist",
+            "HTTP Request registers asset version in DAM with file_url and checksum",
+            "HTTP Request updates ShotGrid to Pending Review and assigns supervisor",
+            "Slack/Email notification with DAM and ShotGrid links"
+          ],
+          "logging_errors": [
+            "Attach validation report to ShotGrid note",
+            "Capture latency and validation outcome to metrics sink"
+          ],
+          "outputs": [
+            "Versioned asset registered in DAM",
+            "Review task/status updated and supervisor alerted"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Production (Shot Assembly & Animation)",
+      "goal": "Automate scene assembly and dailies preparation.",
+      "workflows": [
+        {
+          "name": "CHM-Prod-Scene-Assembly",
+          "trigger": "Webhook when layout task status becomes In Progress",
+          "nodes": [
+            "HTTP Request fetches required assets from ShotGrid/DAM",
+            "Function builds scene blueprint JSON",
+            "HTTP Request submits blueprint to DCC Scene Builder API returning scene_path and job_id",
+            "HTTP Request updates ShotGrid with scene_path and job_id, sets sub-status",
+            "Slack notification to layout artist"
+          ],
+          "error_handling": [
+            "If builder API fails, set task Blocked, add error note, notify pipeline TD"
+          ],
+          "outputs": [
+            "Auto-built scene referenced on layout task"
+          ]
+        },
+        {
+          "name": "CHM-Prod-Dailies-Generation",
+          "trigger": "Webhook from animation publish tool with shot_id/version_id",
+          "nodes": [
+            "HTTP Request submits playblast/preview job and records queue_id",
+            "HTTP Request loop or webhook wait monitors completion",
+            "HTTP Request transcodes to MP4 with burn-ins",
+            "HTTP Request uploads MP4 to review system and playlist",
+            "HTTP Request updates ShotGrid with review media and sets Pending Review",
+            "Slack/Email supervisor notification"
+          ],
+          "error_handling": [
+            "Mark status Needs Repair on failure, attach reason, auto-retry with capped attempts"
+          ],
+          "outputs": [
+            "Dailies prepared, transcoded, uploaded, and linked"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Post-Production (Lighting, Rendering, Compositing)",
+      "goal": "Automate render orchestration, QC, and comp prep.",
+      "workflows": [
+        {
+          "name": "CHM-Post-Render-Management",
+          "trigger": "Webhook when shot status is Ready for Final Render",
+          "nodes": [
+            "HTTP Request fetches render config (AOVs, frames, resolution, pool, priority)",
+            "HTTP Request submits render job to Deadline/AWS and records render_job_id",
+            "HTTP Request or webhook monitors queue and progress",
+            "Function evaluates queue depth/ETA for cloud bursting and scales instances via HTTP Request",
+            "HTTP Request updates ShotGrid with timestamps, utilization, output path, and status transitions"
+          ],
+          "error_handling": [
+            "On failure set Render Failed, attach log URL, notify lighting lead, and optionally resubmit"
+          ],
+          "outputs": [
+            "Render jobs orchestrated with scaling decisions logged"
+          ]
+        },
+        {
+          "name": "CHM-Post-QC-Comp-Prep",
+          "trigger": "Webhook or poll when render completes",
+          "nodes": [
+            "HTTP Request fetches rendered frames metadata",
+            "Function runs QC for frame count/continuity/corruption",
+            "IF branches on qc_status to fail or proceed",
+            "HTTP Request sets Ready for Comp and records QC report URL",
+            "HTTP Request calls comp-template service to generate Nuke script",
+            "HTTP Request attaches comp script to ShotGrid and notifies comp team"
+          ],
+          "logging_errors": [
+            "QC metrics (frame count, duration, error types) pushed to metrics sink",
+            "Failures update ShotGrid note/status and notify comp/lighting"
+          ],
+          "outputs": [
+            "QC outcome recorded and comp template delivered"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Editorial & Sound",
+      "goal": "Keep editorial changes synced with shots and tasks.",
+      "workflows": [
+        {
+          "name": "CHM-Editorial-Conform",
+          "trigger": "Webhook with new EDL/XML or scheduler polling shared storage",
+          "nodes": [
+            "HTTP Request fetches EDL/XML",
+            "Function parses edit list into structured shots with timecodes",
+            "HTTP Request fetches previous edit version",
+            "Function diffs to derive new_shots, retimed_shots, removed_shots",
+            "HTTP Request updates ShotGrid statuses accordingly",
+            "Slack/Email notifications with summarized diff"
+          ],
+          "error_handling": [
+            "Malformed EDL/XML triggers Conform Failed status and alerts editorial TD"
+          ],
+          "outputs": [
+            "Shot statuses aligned with latest edit and impacted teams notified"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Finalization & Distribution",
+      "goal": "Automate mastering, transcoding, packaging, and delivery.",
+      "workflows": [
+        {
+          "name": "CHM-Final-Mastering-Transcode",
+          "trigger": "Webhook/status when episode is picture_locked=true and final_qc=passed",
+          "nodes": [
+            "HTTP Request fetches locked timeline reference",
+            "HTTP Request submits transcode jobs for 4K ProRes, HD H.264, and platform specs",
+            "HTTP Request or webhook monitors transcode jobs",
+            "HTTP Request registers master deliverables and metadata to ShotGrid"
+          ],
+          "error_handling": [
+            "Failed transcodes set Transcode Failed, notify finishing team, limited retries"
+          ],
+          "outputs": [
+            "Master formats generated and linked to episode"
+          ]
+        },
+        {
+          "name": "CHM-Final-Packaging-Delivery",
+          "trigger": "Webhook/status when ready_for_delivery=true",
+          "nodes": [
+            "HTTP Request gathers deliverables (video masters, audio stems, subtitles, metadata)",
+            "Function builds delivery package definition (IMF/DPP structure, checksums, targets)",
+            "HTTP Request packages bundle and returns package_url",
+            "HTTP Request initiates high-speed transfer via Aspera/Signiant",
+            "Function performs checksum verification",
+            "HTTP Request updates delivery log with status, timestamps, and tracking",
+            "Slack/Email alerts distribution, production, and client reps"
+          ],
+          "error_handling": [
+            "Delivery failures set Delivery Failed with reason and schedule retry or escalation"
+          ],
+          "outputs": [
+            "Delivery packages created, transferred, and logged with verification"
+          ]
+        }
+      ]
+    }
+  ],
+  "cross_cutting": {
+    "credentials": "Use n8n credential vault for all integrations; reference via node credential selectors.",
+    "retries_timeouts": "Configure HTTP retries/backoff; wrap long operations with Wait and Error Trigger for timeouts.",
+    "idempotency": "Gate updates with version_id/script_hash/render_job_id checks using IF nodes.",
+    "audit_trails": "Post event_log records (entity, action, status, duration, user, request IDs) to SSoT and metrics sink.",
+    "security": "Validate webhook signatures, enforce HTTPS, and avoid secrets in Function code."
+  }
+}
